@@ -10,7 +10,8 @@ import java.util.function.*;
 @Service
 public class JwtUtil {
 
-    private String SECRET_KEY = "DIGITALIZATION";// to be externalized
+    //private String SECRET_KEY = "DIGITALIZATION";// to be externalized
+    private static String SECRET_KEY = "afafasfafafasfasfasfafacasdasfasxASFACASDFACASDFASFASFDAFASFASDAADSCSDFADCVSGCFVADXCcadwavfsfarvf";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
