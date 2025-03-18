@@ -1,52 +1,114 @@
 package com.note.security.service;
 
-import io.jsonwebtoken.*;
-import org.springframework.security.core.userdetails.*;
-import org.springframework.stereotype.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 @Service
 public class JwtUtil {
 
-    //private String SECRET_KEY = "DIGITALIZATION";// to be externalized
-    private static String SECRET_KEY = "afafasfafafasfasfasfafacasdasfasxASFACASDFACASDFASFASFDAFASFASDAADSCSDFADCVSGCFVADXCcadwavfsfarvf";
+    private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
+
+    private static final String SECRET_KEY = "afafasfafafasfasfasfafacasdasfasxASFACASDFACASDFASFASFDAFASFASDAADSCSDFADCVSGCFVADXCcadwavfsfarvf";
 
     public String extractUsername(String token) {
+        if (token == null) {
+            logger.error("Token is null");
+            throw new JwtException("Token is null");
+        }
+        logger.info("Extracting username from token: {}", token);
         return extractClaim(token, Claims::getSubject);
     }
 
     public Date extractExpiration(String token) {
+        if (token == null) {
+            logger.error("Token is null");
+            throw new JwtException("Token is null");
+        }
+        logger.info("Extracting expiration date from token: {}", token);
         return extractClaim(token, Claims::getExpiration);
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        if (token == null) {
+            logger.error("Token is null");
+            throw new JwtException("Token is null");
+        }
+        logger.info("Extracting claim from token: {}", token);
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
+
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        if (token == null) {
+            logger.error("Token is null");
+            throw new JwtException("Token is null");
+        }
+        logger.info("Extracting all claims from token: {}", token);
+        try {
+            return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        } catch (JwtException e) {
+            logger.error("Error parsing token: {}", token, e);
+            throw e;
+        }
     }
 
     private Boolean isTokenExpired(String token) {
+        if (token == null) {
+            logger.error("Token is null");
+            throw new JwtException("Token is null");
+        }
+        logger.info("Checking if token is expired: {}", token);
         return extractExpiration(token).before(new Date());
     }
 
     public String generateToken(UserDetails userDetails) {
+        if (userDetails == null) {
+            logger.error("User details are null");
+            throw new IllegalArgumentException("User details are null");
+        }
+        logger.info("Generating token for user: {}", userDetails.getUsername());
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, userDetails.getUsername());
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
-
+        if (subject == null) {
+            logger.error("Subject is null");
+            throw new IllegalArgumentException("Subject is null");
+        }
+        logger.info("Creating token with subject: {}", subject);
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
+        if (token == null || userDetails == null) {
+            logger.error("Token or user details are null");
+            throw new JwtException("Token or user details are null");
+        }
+        logger.info("Validating token for user: {}", userDetails.getUsername());
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        if (!username.equals(userDetails.getUsername())) {
+            logger.error("Token username does not match user details username: {}", token);
+            return false;
+        }
+        if (isTokenExpired(token)) {
+            logger.error("Token is expired: {}", token);
+            return false;
+        }
+        logger.info("Token is valid: {}", token);
+        return true;
     }
 }

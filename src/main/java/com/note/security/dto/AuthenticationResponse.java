@@ -1,6 +1,6 @@
 package com.note.security.dto;
 
-import java.io.*;
+import java.io.Serializable;
 
 public class AuthenticationResponse implements Serializable {
 

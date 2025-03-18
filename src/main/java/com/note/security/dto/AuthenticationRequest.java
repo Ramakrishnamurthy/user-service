@@ -24,8 +24,7 @@ public class AuthenticationRequest implements Serializable {
     }
 
     //need default constructor for JSON Parsing
-    public AuthenticationRequest()
-    {
+    public AuthenticationRequest() {
 
     }
 
